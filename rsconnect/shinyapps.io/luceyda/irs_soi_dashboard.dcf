@@ -1,0 +1,10 @@
+name: irs_soi_dashboard
+title:
+username:
+account: luceyda
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3542495
+bundleId: 4159462
+url: https://luceyda.shinyapps.io/irs_soi_dashboard/
+when: 1611967255.80882

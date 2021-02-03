@@ -1,0 +1,144 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r "setup", message=FALSE, include=FALSE, results='hide'}
+require("knitr")
+require("MarkdownReports")
+opts_knit$set(root.dir = "~/Desktop/David/Projects/irs")
+```
+
+
+
+
+```{r}
+library(glue)
+library(kableExtra)
+library(janitor)
+library(data.table)
+library(ggplot2)
+library(stringr)
+```
+
+
+
+##Functions to clean IRS SOI data by zip
+```{r include=FALSE}
+## Load your R files
+lapply(list.files("./R", full.names = TRUE), source)
+```
+
+
+
+# Load full data from disc from irs_zip_soi as data.table. Add state code to return single State.
+
+```{r}
+# Load data
+irs <- load_soi()
+
+# Run clean soi
+irs <- clean_soi(irs)
+```
+
+# Clean uploaded data for dupes, summary zips, changed income groupings, summarized vaars
+
+```{r}
+#Summary of unique levels and NA's
+irs[, lapply(.SD, uniqueN)][
+  ][, melt(.SD)][order(value)]
+irs[, lapply(.SD, function(x) (sum(is.na(x))) / .N)][
+  ][, melt(.SD)][value > 0][
+    ][order(value), .(variable, format(value, scientific = FALSE))]
+```
+
+# Pivot tables
+
+```{r}
+#AGI by state
+cube(irs, .(agi_cap = sum(a00100, na.rm = TRUE) / sum(n1, na.rm = TRUE)),
+     by = c("year", "state"))[
+     ][, dcast(.SD, state ~ year)][
+      ][order(`2018`, decreasing = TRUE)]
+
+cube_function(a00100, n1)
+
+#Total tax per cap >$100k
+cube(irs, .(tax_cap = sum(total_tax, na.rm = TRUE) / sum(n1, na.rm = TRUE)),
+     by = c("year", "state", "agi_level"))[agi_level == "$100k+"][
+     ][, dcast(.SD, state ~ year)][
+      ][order(`2018`, decreasing = TRUE)]
+
+#Federal tax rate by state
+cube(irs, .(tax_cap = sum(total_tax, na.rm = TRUE) / sum(a00100, na.rm = TRUE)),
+     by = c("year", "state", "agi_level"))[agi_level == "$100k+"][
+     ][, dcast(.SD, state ~ year)][
+      ][order(`2018`, decreasing = TRUE)]
+
+#EITC per cap by state
+cube(irs, .(
+  eitc = sum(a59660, na.rm = TRUE) * 1000 / sum(n59660, na.rm = TRUE)
+  ),
+    by = c("year", "state"))[
+    ][, dcast(.SD, state ~ year)][
+      ][order(`2018`, decreasing = TRUE)]
+
+#Heath indiv resp payment per cap by state
+cube(irs, .(
+  health = sum(a09750, na.rm = TRUE) * 1000 / sum(n09750, na.rm = TRUE)),
+     by = c("year", "state"))[
+     ][, dcast(.SD, state ~ year)][
+      ][order(`2018`, decreasing = TRUE)]
+
+#itemized deductions per cap
+cube(irs, .(
+  itemized = sum(a04470, na.rm = TRUE) * 1000 / sum(n04470, na.rm = TRUE)),
+  by = c("year", "state"))[
+  ][, dcast(.SD, state ~ year)][
+    ][order(`2018`, decreasing = TRUE)]
+
+```
+
+
+# Verify amounts add up 
+```{r}
+# https://taxfoundation.org/federal-tax-revenue-source-1934-2018/
+irs[order(year), 
+    .(
+      `Total \n AGI ($B)` = sum(as.numeric(a00100), na.rm = TRUE) / 1000000,
+      `Total \n Tax ($B)` = sum(as.numeric(total_tax), na.rm = TRUE) /
+        1000000,
+      `Total \n Returns (m)` = sum(as.numeric(n1), na.rm = TRUE) / 1000000,
+      `Unique Zips` = length(unique(zipcode))
+    ), 
+    by = .(`Year` = year)] %>% 
+  kable(
+    digits = 0,
+    format.args = list(
+      format = "html",
+      scientific = FALSE,
+      big.mark = ","
+    ),
+    booktabs = TRUE
+  ) %>%
+  kable_styling(position = "center",
+                bootstrap_options = c("striped", "condensed"))
+```
+
+
+```{r}
+cols <- c("year", "zipcode", "state", "agi_level", "a00100", "a00200", "n00200", "total_tax", "n1", "n2", "numdep", "a01000", "n01000", "a02300", "n02300", "a59660", "a09750","a04470", "n02500", "a18425", "n18425", "a18450", "n18450", "a18500", "n18500", "a19300", "n19300", "a00600", "n00600", "a00300", "n00300")
+d <- irs[, ..cols]
+```
+
+
+
+# SaveRDS
+
+```{r}
+saveRDS(irs,"irs.RDS")
+```
+
+
+
+
