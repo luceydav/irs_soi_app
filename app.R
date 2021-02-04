@@ -110,6 +110,10 @@ server <- function(input, output, session) {
           scrollY = TRUE,
           dom = 't'
         ),
+      caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: center;',
+        '', htmltools::em('Annual Aggregated AGI, Federal Tax, Total Returns and Unique Zipcodes by Selection')
+      ),
       rownames = FALSE
     ) %>%
       formatRound(
@@ -171,7 +175,7 @@ server <- function(input, output, session) {
         ) %>%
           add_markers(size = ~ `Returns`,
                       mode = "markers")],
-      title = "Annual Aggregate AGI by Group"
+      title = "Annual Aggregate AGI by Selected Group"
     )
   })
   
@@ -217,7 +221,7 @@ server <- function(input, output, session) {
         ) %>%
           add_markers(size = ~ `Returns`,
                       mode = "markers")],
-      title = "Annual Effective Tax Rate by Group"
+      title = "Annual Effective Tax Rate by Selected Group"
     )
   })
 }
