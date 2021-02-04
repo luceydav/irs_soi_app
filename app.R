@@ -1,4 +1,3 @@
-
 library(shiny)
 library(shinydashboard)
 library(data.table)
@@ -8,7 +7,7 @@ library(ggplot2)
 library(plotly)
 library(shinyWidgets)
 library(fst)
-library(shinycssloaders)
+#library(shinycssloaders)
 
 # Data
 irs_app_data <- read_fst("irs_app.fst")
@@ -175,8 +174,14 @@ server <- function(input, output, session) {
         ) %>%
           add_markers(size = ~ `Returns`,
                       mode = "markers")],
-      title = "Annual Aggregate AGI by Selected Group"
-    )
+      title = "Annual Aggregate AGI Per Capita by Selected Group"
+    , 
+    xaxis = list(
+      title = "Year"
+    ), 
+    yaxis = list(
+      title = "AGI per Capita ($k)"
+    ))
   })
   
   output$TaxRate <- renderPlotly({
@@ -221,7 +226,13 @@ server <- function(input, output, session) {
         ) %>%
           add_markers(size = ~ `Returns`,
                       mode = "markers")],
-      title = "Annual Effective Tax Rate by Selected Group"
+      title = "Annual Effective Tax Rate by Selected Group", 
+      xaxis = list(
+        title = "Year"
+      ), 
+      yaxis = list(
+        title = "Effective Tax Rate (%)"
+      )
     )
   })
 }
