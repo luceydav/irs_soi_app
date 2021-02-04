@@ -19,21 +19,40 @@ header <- dashboardHeader(title = "IRS Tax Dashboard")
 sidebar <- dashboardSidebar(
   
   ## Sidebar content
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Table", tabName = "table", icon = icon("table")),
-      menuItem("Charts", tabName = "charts", icon = icon("bar-chart-o")),
-      selectizeGroupUI(
-        id = "my-filters",
-        inline = FALSE,
-        params = list(
-          var_one = list(inputId = "state", title = "Specify States", placeholder = 'select'),
-          var_two = list(inputId = "county", title = "Specify Counties", placeholder = 'select'),
-          var_three = list(inputId = "post_office_city", title = "Specify Cities", placeholder = 'select'),
-          var_four = list(inputId = "zipcode", title = "Specify Zipcodes", placeholder = 'select'),
-          var_five = list(inputId = "agi_level", title = "Specify Income Levels", placeholder = 'select')
+  dashboardSidebar(sidebarMenu(
+    menuItem("Table", tabName = "table", icon = icon("table")),
+    menuItem("Charts", tabName = "charts", icon = icon("bar-chart-o")),
+    selectizeGroupUI(
+      id = "my-filters",
+      inline = FALSE,
+      params = list(
+        var_one = list(
+          inputId = "state",
+          title = "Specify States",
+          placeholder = 'select'
+        ),
+        var_two = list(
+          inputId = "county",
+          title = "Specify Counties",
+          placeholder = 'select'
+        ),
+        var_three = list(
+          inputId = "post_office_city",
+          title = "Specify Cities",
+          placeholder = 'select'
+        ),
+        var_four = list(
+          inputId = "zipcode",
+          title = "Specify Zipcodes",
+          placeholder = 'select'
+        ),
+        var_five = list(
+          inputId = "agi_level",
+          title = "Specify Income Levels",
+          placeholder = 'select'
         )
       )
+    )
   ))
 )
 
@@ -42,15 +61,11 @@ body <- dashboardBody(
   tabItems(
     # First tab content
     tabItem(tabName = "table",
-            fluidRow(
-              shinydashboard::box(dataTableOutput("Table"), width = 12)
-            )),
-    tabItem(tabName = "charts",
-            fluidRow(
-              shinydashboard::box(plotlyOutput("AGI_Level"), width = 12)
-            ),
-            fluidRow(
-              shinydashboard::box(plotlyOutput("TaxRate"), width = 12)
+            fluidRow(shinydashboard::box(dataTableOutput("Table"), width = 12))),
+    tabItem(
+      tabName = "charts",
+      fluidRow(shinydashboard::box(plotlyOutput("AGI_Level"), width = 12)),
+      fluidRow(shinydashboard::box(plotlyOutput("TaxRate"), width = 12)
             ))
   ))
 
@@ -60,12 +75,12 @@ server <- function(input, output, session) {
     module = selectizeGroupServer,
     id = "my-filters",
     data = irs_app_data,
-    vars = c("state", "county", "post_office_city", "zipcode", "agi_level", "year", "agi_level", "n1", "a00100", "total_tax")
+    vars = c("state", "county", "post_office_city", "zipcode", "agi_level")
   )
   
   output$Table <- renderDT({
     
-    if( length(res_mod()$zipcode) < 50) {
+    if (length(res_mod()$zipcode) < 50) {
       digits <- 3
     } else {
       digits <- 1
@@ -116,7 +131,8 @@ server <- function(input, output, session) {
   
   output$AGI_Level <- renderPlotly({
     
-    setDT(res_mod())[,
+    plotly::layout(
+      setDT(res_mod())[,
          {
            agi_sum = sum(a00100, na.rm = TRUE)
            total = sum(n1, na.rm = TRUE)
@@ -154,12 +170,15 @@ server <- function(input, output, session) {
           )
         ) %>%
           add_markers(size = ~ `Returns`,
-                      mode = "markers")]
+                      mode = "markers")],
+      title = "Annual Aggregate AGI by Group"
+    )
   })
   
   output$TaxRate <- renderPlotly({
     
-    setDT(res_mod())[,
+    plotly::layout(
+      setDT(res_mod())[,
          {
            agi_sum = sum(a00100 , na.rm = TRUE)
            tot_tax = sum(total_tax, na.rm = TRUE)
@@ -197,7 +216,9 @@ server <- function(input, output, session) {
           )
         ) %>%
           add_markers(size = ~ `Returns`,
-                      mode = "markers")]
+                      mode = "markers")],
+      title = "Annual Effective Tax Rate by Group"
+    )
   })
 }
 

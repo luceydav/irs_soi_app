@@ -9,3 +9,4 @@ library(janitor)
 library(fst)
 
 conflicted::conflict_prefer("dataTableOutput", "DT")
+conflicted::conflict_prefer("layout", "plotly")
